@@ -1,54 +1,52 @@
-import { useState } from 'react';
-import styles from '../Login/Login.module.css';
+import styles from '../Register/Register.module.css';
 import { Link } from 'react-router-dom';
-export default function Login() {
+import { useState } from 'react';
+export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const isDisabled = !username || !password;
-  async function handleLogin(e) {
+
+  async function handleRegister(e) {
     e.preventDefault();
     if (isDisabled) {
       alert('Пожалуйста, заполните все поля');
       return;
     }
     try {
-      const response = await fetch('http://localhost:3000/api/auth/login', {
+      const response = await fetch('http://localhost:3000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
-      console.log(data);
-
       if (response.ok) {
-        localStorage.setItem('authToken', data.token);
-        alert('Вход выполнен успешно', data);
+        alert('Регистрация успешна! Теперь вы можете войти.');
       } else {
         alert(`Ошибка: ${data.error}`);
       }
     } catch (error) {
-      console.error('Error during login:', error);
-      alert('Произошла ошибка при входе');
+      console.error('Error during registration:', error);
+      alert('Произошла ошибка при регистрации');
     }
   }
 
   return (
     <div className={styles.container}>
-          <div className={styles.containerContent}>
+      {' '}
+      <div className={styles.containerContent}>
         <div className={styles.containerUsername}>
           <label htmlFor="username">Username</label>
           <input
             className={styles.input}
             id="username"
             type="text"
-            placeholder="Введите логин"
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            placeholder="Введите логин"
+            onChange={(e) => setUsername(e.target.value)}
           />
         </div>
         <div className={styles.containerPassword}>
@@ -57,22 +55,22 @@ export default function Login() {
             className={styles.input}
             id="password"
             type="password"
-            placeholder="Введите пароль"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Введите пароль"
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
         <div className={styles.containerBtn}>
-          <button className={styles.button} onClick={handleLogin}>
-            Войти
+          <button className={styles.button} onClick={handleRegister}>
+            Регистрация
           </button>
         </div>
       </div>
       <div className={styles.containerRegister}>
-        <span > Вы не зарегистрированы?</span>
-        <Link to="/register" className={styles.text}>
-          Перейти к регистрации
+        <span> Вы уже зарегистрированы?</span>
+        <Link to="/login" className={styles.text}>
+          Войти
         </Link>
       </div>
     </div>
