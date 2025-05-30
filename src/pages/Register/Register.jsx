@@ -1,15 +1,18 @@
 import styles from '../Register/Register.module.css';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { toast } from 'react-toastify';
 export default function Register() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const isDisabled = !username || !password;
 
+  const navigate = useNavigate();
+
   async function handleRegister(e) {
     e.preventDefault();
     if (isDisabled) {
-      alert('Пожалуйста, заполните все поля');
+      toast.error('Пожалуйста, заполните все поля');
       return;
     }
     try {
@@ -24,13 +27,14 @@ export default function Register() {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Регистрация успешна! Теперь вы можете войти.');
+        toast.success('Регистрация успешна! Теперь вы можете войти.');
+        navigate('/login');
       } else {
-        alert(`Ошибка: ${data.error}`);
+        toast.error(`Ошибка: ${data.error}`);
       }
     } catch (error) {
       console.error('Error during registration:', error);
-      alert('Произошла ошибка при регистрации');
+      toast.error('Произошла ошибка при регистрации');
     }
   }
 

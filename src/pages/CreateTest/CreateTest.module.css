@@ -54,7 +54,7 @@ textarea {
   border: solid 1px #0808081b;
   border-radius: 6px;
 }
-input[type="file"] {
+input[type='file'] {
   line-height: 40px;
 }
 
@@ -68,4 +68,14 @@ input[type="file"] {
   cursor: pointer;
   align-self: flex-start;
   margin-bottom: 28px;
+  padding: 0;
+}
+.imgBack {
+  width: 20px;
+  height: auto;
+}
+.containerBtnBack{
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }

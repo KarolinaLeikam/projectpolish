@@ -1,22 +1,32 @@
-import { useState } from "react";
-import styles from "../Login/Login.module.css";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import styles from '../Login/Login.module.css';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 export default function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
   const isDisabled = !username || !password;
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      localStorage.removeItem('authToken');
+    }
+  }, []);
   async function handleLogin(e) {
     e.preventDefault();
     if (isDisabled) {
-      alert("Пожалуйста, заполните все поля");
+      toast.error('Пожалуйста, заполните все поля');
       return;
     }
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
+      const response = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
 
         body: JSON.stringify({ username, password }),
@@ -27,14 +37,15 @@ export default function Login() {
       console.log(data);
 
       if (response.ok) {
-        localStorage.setItem("authToken", data.token);
-        alert("Вход выполнен успешно", data);
+        localStorage.setItem('authToken', data.token);
+        toast.success('Успешный вход!');
+        navigate('/');
       } else {
-        alert(`Ошибка: ${data.error}`);
+        toast.error(`Ошибка: ${data.error}`);
       }
     } catch (error) {
-      console.error("Error during login:", error);
-      alert("Произошла ошибка при входе");
+      console.error('Error during login:', error);
+      toast.error('Произошла ошибка при входе');
     }
   }
 
