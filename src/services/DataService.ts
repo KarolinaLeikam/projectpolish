@@ -35,7 +35,7 @@ export interface AudioQuestionTest extends Test {
 }
 
 export class DataService {
-  private baseUrl = "http://localhost:3000/api";
+  private baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
   async request(
     url: string,
