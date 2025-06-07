@@ -1,36 +1,52 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import styles from "./Test.module.css";
+import { errorToast, successToast } from "../../services/Toast";
+import { dataService } from "../../services/DataService";
+import Confetti from "react-confetti";
+import { useWindowSize } from "../../hooks/useWindowSize";
 
 type Test = {
-  title?: string;
-  text: string;
-  answers: string[];
-  audiofile?: string;
+  id: number;
+  type: string;
+  title: string;
+  content: {
+    text: string;
+    answers: string[];
+    audiofile: string;
+  };
 };
 
-const getBorderStyle = (userAnswer: string, correctAnswer: string) => {
-  console.log(userAnswer, correctAnswer);
-  if (userAnswer === correctAnswer) {
-    return "1px solid green";
-  } else {
-    return "1px solid red";
-  }
+const getBorderStyle = (userAnswer: boolean) => {
+  return userAnswer ? "1px solid green" : "1px solid red";
 };
 
 export default function Test() {
-  const userAnswers = useRef<string[]>([]);
-  const results = useRef<boolean[]>([]);
+  const [userAnswers, setUserAnswers] = useState<{ [key: number]: boolean }>(
+    {}
+  );
+
   const { id } = useParams();
-  const [checked, setChecked] = useState(false);
   const [test, setTest] = useState<Test | null>(null);
+  const [countChecked, setCountChecked] = useState(0);
+  const { width, height } = useWindowSize();
+  const [isTestSolved, setIsTestSolved] = useState(false);
+  const answersArr = Object.values(userAnswers);
+
+  const isButtonDisabled =
+    isTestSolved || answersArr.length !== test?.content.answers.length;
 
   useEffect(() => {
-    const getTest = async () => {
-      const response = await fetch(`http://localhost:3000/api/tests/${id}`);
-      const data = await response.json();
+    if (!id) return;
 
-      setTest(data);
+    const getTest = async () => {
+      const response = await dataService.getTest(id);
+
+      if (response?.success) {
+        setTest(response.data);
+      } else {
+        errorToast(`Ошибка: ${response?.data?.error}`);
+      }
     };
     getTest();
   }, []);
@@ -38,25 +54,37 @@ export default function Test() {
   const renderTest = useMemo(() => {
     if (!test) return null;
 
-    const parts = test.text.split("__");
+    const parts = test.content.text.split("__");
     const elements = [];
 
     for (let i = 0; i < parts.length; i++) {
-      elements.push(<span key={`text-${i}`}>{parts[i]}</span>);
+      elements.push(
+        <span
+          key={`text-${i}`}
+          style={{ whiteSpace: "pre-wrap", margin: "4px 2px" }}
+        >
+          {parts[i]}
+        </span>
+      );
       if (i < parts.length - 1) {
         elements.push(
           <input
             key={`input-${i}`}
             type="text"
+            readOnly={isTestSolved}
             style={{
-              margin: "0 4px",
+              margin: "4px 2px",
               width: "100px",
-              border: checked
-                ? getBorderStyle(userAnswers.current[i], test?.answers[i])
-                : "1px solid black",
+              border:
+                countChecked > 0
+                  ? getBorderStyle(userAnswers[i])
+                  : "1px solid black",
             }}
             onChange={(e) => {
-              userAnswers.current[i] = e.target.value;
+              setUserAnswers((prev) => ({
+                ...prev,
+                [i]: e.target.value.toLowerCase() === test.content.answers[i],
+              }));
             }}
           />
         );
@@ -64,38 +92,59 @@ export default function Test() {
     }
 
     return elements;
-  }, [test, checked]);
+  }, [test, countChecked]);
+
+  const renderMistakes = useMemo(() => {
+    if (!test || countChecked === 0) return null;
+
+    return test.content.answers.map((answer, i) => {
+      const isCorrect = answersArr[i];
+
+      if (isCorrect) return null;
+
+      return (
+        <span key={`mistake-${i}`} style={{ margin: "4px 2px", color: "red" }}>
+          Odpowiedź {i + 1}: {answer}
+        </span>
+      );
+    });
+  }, [countChecked, test]);
 
   const checkAnswers = () => {
-    const correctAnswers = test?.answers;
-    console.log(correctAnswers);
-    console.log(userAnswers.current);
-    const isCorrect = userAnswers.current.every((answer, index) => {
-      const isCorrect = answer === correctAnswers[index];
-      results.current.push(isCorrect);
-    });
+    setCountChecked((prev) => prev + 1);
 
-    setChecked(true);
+    if (answersArr.length === test?.content.answers.length) {
+      const isCorrect = answersArr.every((answer) => answer);
 
-    if (isCorrect) {
-      alert("You are correct!");
-    } else {
-      alert("You are incorrect!");
+      if (isCorrect) {
+        setIsTestSolved(true);
+        successToast("Test zaliczony!");
+      }
     }
   };
 
   return (
     <div className={styles.container}>
+      <Confetti width={width} height={height} run={isTestSolved} />
       <div className={styles.content}>
         <h2 className={styles.title}>{test?.title}</h2>
-        {test?.audiofile && <audio src={test?.audiofile} controls />}
-        {renderTest}
-        <button onClick={checkAnswers}>Check Answers</button>
-        {/* <label htmlFor="odpowiedzi">Odpowiedzi (oddzielone przecinkami)</label>
-        <input id="odpowiedzi" type="text" placeholder="mają, chce, kosztuje" />
-        <label htmlFor="file">Audio File</label>
-        <input id="file" type="file" accept="audio/*" />
-        <button className={styles.button}>Create Test</button> */}
+        {test?.content.audiofile && (
+          <audio src={test.content.audiofile} controls />
+        )}
+        <div>{renderTest}</div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {renderMistakes}
+        </div>
+        <button
+          className={styles.button}
+          style={{
+            backgroundColor: isButtonDisabled ? "#797a7c" : "#0f1729",
+          }}
+          onClick={checkAnswers}
+          disabled={isButtonDisabled}
+        >
+          sprawdzić
+        </button>
       </div>
     </div>
   );

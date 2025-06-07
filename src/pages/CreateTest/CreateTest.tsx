@@ -1,68 +1,72 @@
-import { Link } from 'react-router-dom';
-import styles from './CreateTest.module.css';
-import { useState } from 'react';
-import { toast } from 'react-toastify';
-import Back from '../CreateTest/back.png';
-
-const token = localStorage.getItem('authToken');
+import { Link } from "react-router-dom";
+import styles from "./CreateTest.module.css";
+import { useState } from "react";
+import Back from "../CreateTest/back.png";
+import { dataService } from "../../services/DataService";
+import { errorToast, successToast } from "../../services/Toast";
+import Spinner from "../../components/Spinner/Spinner";
 
 export default function CreateTest() {
-  const [title, setTitle] = useState('');
-  const [text, setText] = useState('');
-  const [answers, setAnswers] = useState('');
+  const [title, setTitle] = useState("");
+  const [text, setText] = useState("");
+  const [answers, setAnswers] = useState("");
   const [audiofile, setAudiofile] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isButtonDisabled = !text || !answers || !title;
 
   const createTest = async () => {
     const formData = new FormData();
-    formData.append('title', title);
-    formData.append('text', text);
-    formData.append('answers', answers);
-    formData.append('audiofile', audiofile as File);
+    formData.append("title", title);
+    formData.append("text", text);
+    formData.append("answers", answers);
+    formData.append("audiofile", audiofile as File);
+    formData.append("type", "input-choice");
 
-    try {
-      const response = await fetch('http://localhost:3000/api/tests/', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    setIsLoading(true);
+    const response = await dataService.createTest(formData);
+    setIsLoading(false);
 
-      const json = await response.json();
+    if (response?.success) {
+      setTitle("");
+      setText("");
+      setAnswers("");
+      setAudiofile(null);
 
-      if (response.ok) {
-        setTitle('');
-        setText('');
-        setAnswers('');
-        setAudiofile(null);
-
-        toast.success('Test created successfully');
-      } else {
-        toast.error('Failed to create test');
-      }
-    } catch (error) {
-      console.log(error);
+      successToast("Test created successfully");
+    } else {
+      errorToast("Failed to create test");
     }
   };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <div className={styles.container}>
       <button className={styles.backButton}>
-        <Link className={styles.containerBtnBack} to="/"><img className={styles.imgBack} src={Back} alt="Go back" />Go Back </Link>
+        <Link className={styles.containerBtnBack} to="/">
+          <img className={styles.imgBack} src={Back} alt="Go back" />
+          Go Back{" "}
+        </Link>
       </button>
       <div className={styles.content}>
         <h2 className={styles.title}>Create New Test</h2>
         <label htmlFor="title">Title</label>
-        <input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input
+          id="title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
         <label htmlFor="text">Text (use ___ for blanks)</label>
         <textarea
           name="text"
           id="text"
           value={text}
-          onChange={(e) => setText(e.target.value)}></textarea>
+          onChange={(e) => setText(e.target.value)}
+        ></textarea>
         <label htmlFor="odpowiedzi">Odpowiedzi (oddzielone przecinkami)</label>
         <input
           id="odpowiedzi"
@@ -86,9 +90,10 @@ export default function CreateTest() {
           onClick={createTest}
           disabled={isButtonDisabled}
           style={{
-            backgroundColor: isButtonDisabled ? 'grey' : '#0f1729',
-          }}>
-          Create Test
+            backgroundColor: isButtonDisabled ? "grey" : "#0f1729",
+          }}
+        >
+          Stwórz test
         </button>
       </div>
     </div>

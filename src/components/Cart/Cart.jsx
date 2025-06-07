@@ -1,32 +1,25 @@
-import RecycleBin from './RecycleBin.png';
-import { Link } from 'react-router-dom';
-import styles from './Cart.module.css';
+import RecycleBin from "./RecycleBin.png";
+import { Link } from "react-router-dom";
+import styles from "./Cart.module.css";
+import { dataService } from "../../services/DataService";
+import { errorToast, successToast } from "../../services/Toast";
+import Spinner from "../Spinner/Spinner";
+import { useState } from "react";
 
 export default function Cart({ title, id, test, getTests }) {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem("authToken");
+  const [isLoading, setIsLoading] = useState(false);
 
   async function deleteTest() {
-    try {
-      const response = await fetch(`http://localhost:3000/api/tests/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      });
+    setIsLoading(true);
+    const response = await dataService.deleteTest(id);
+    setIsLoading(false);
 
-      const result = await response.json();
-      console.log(result)
-
-      if (response.ok) {
-        alert('Тест успешно удален');
-        getTests();
-      } else {
-        alert(`Ошибка: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Ошибка при удалении теста:', error);
-      alert('Произошла ошибка при удалении теста');
+    if (response.success) {
+      successToast("Тест успешно удален");
+      getTests();
+    } else {
+      errorToast(`Ошибка: ${result.error}`);
     }
   }
 
@@ -34,13 +27,21 @@ export default function Cart({ title, id, test, getTests }) {
     <div className={styles.border}>
       <div className={styles.containerText}>
         <p className={styles.title}>{title}</p>
-        {token && (
-          <img className={styles.img} src={RecycleBin} alt="RecycleBin" onClick={deleteTest} />
-        )}
+        {token &&
+          (isLoading ? (
+            <Spinner />
+          ) : (
+            <img
+              className={styles.img}
+              src={RecycleBin}
+              alt="RecycleBin"
+              onClick={deleteTest}
+            />
+          ))}
       </div>
       <div className={styles.containerBtn}>
         <Link className={styles.button} to={`/test/${id}`} state={{ test }}>
-          Take Tast
+          Podejmij test
         </Link>
       </div>
     </div>

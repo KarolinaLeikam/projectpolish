@@ -10,7 +10,6 @@
 }
 
 .button {
-  color: #f7f7f8;
   font-size: 14px;
   font-weight: 600;
   border: none;
@@ -19,12 +18,13 @@
   height: 40px;
   text-align: center;
   line-height: 40px;
-  margin-top: 28px;
+  color: #f7f7f8;
 }
 
 .content {
   display: flex;
   flex-direction: column;
+  gap: 3vw;
   max-width: 900px;
   width: 100%;
 }
